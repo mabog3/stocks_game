@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <h1>Get Quote</h1>
+        <h2> {{name}} (Symbol: {{symbol}}) is currently trading at {{ price | usd}}.</h2>
+        <a href = "quote" class = "btn btn-primary ">New Quote</a>
+{% endblock %}

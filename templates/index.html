@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Stock Index
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <h1>Portfolio</h1>
+        <form action="{{ url_for('index') }}" method="post">
+            <fieldset>
+                <div class="form-group centered">
+                    <select name="gamechoice" class = "dropdown-header centered">
+                        <option class="dropdown-item" btm selected disabled value="">Game</option></option>
+                        <option class="dropdown-item" value=NULL>No Game</option></option>
+                        {% for game in games %}
+                            {% if game.initialized == 1 %}
+                                <option class="dropdown-item" value = {{ game.gamenumber }}> {{ game.name }} </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+            </fieldset>
+        </form>
+
+        <table class="table">
+            <tr>
+                <th>Stock Symbol</th>
+                <th>Share Quantity</th>
+                <th>Share Price</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+            {% for stock in stocks %}
+                {% if stock['stock'] == 'Cash' %}
+                    <tr>
+                        <td>{{ stock['stock'].upper() }}</td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ stock['total'] | usd }}</td>
+                    </tr>
+                {% endif %}
+                {% if stock.stock != 'Cash' %}
+                    <tr>
+                        <td>{{ stock['stock'].upper() }}</td>
+                        <td>{{ stock['quantity'] }}</td>
+                        <td>{{ stock['price'] | usd }}</td>
+                        <td>{{ stock['total'] | usd }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            <tr>
+                <td><strong>TOTAL</strong></td>
+                <td></td>
+                <td></td>
+                <td>{{ total | usd }}</td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+    <script src="{{url_for('static', filename='button.js')}}"></script>
+{% endblock %}
