@@ -11,13 +11,6 @@
     <div>
         <a class = "btn btn-primary" href="/newgame">New Game</a>
     </div>
-    <form action="{{ url_for('gamescreen') }}" method="post">
-        <fieldset>
-            <div></div>
-        </fieldset>
-     </form>
-     <hr>
-    <div>
         <h2>Current Games</h2>
         <table class="table">
             <tr>
@@ -28,7 +21,69 @@
             {% for game in currentgames %}
                 <tr>
                     <td> {{ game['name'] }} </td>
-                    <td> implement opponent </td>
+                    <td> {{ game['opponent'] }} </td>
+                    <td> {{ game['timeRemaining'] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <hr>
+    </div>
+    <h2>Game Invites</h2>
+    <table class="table">
+        <tr>
+            <th>Game</th>
+            <th>Opponent</th>
+            <th>Duration</th>
+            <th>Accept?</th>
+        </tr>
+        <form action="{{ url_for('gamescreen') }}" method="post">
+        {% for game in gameinvites %}
+            <tr>
+                <td> {{ game['name'] }} </td>
+                <td> {{ game['opponent'] }} </td>
+                <td> {{ game['duration'] }} </td>
+                <td> 
+                    <input type="checkbox" name="accept" value={{game.gamenumber}}>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <input type="submit" class="btn btn-secondary" value="Accept checked invites">
+    </form>
+    </div>
+    <hr> 
+    <h2>Sent Invites</h2>
+    <table class="table">
+        <tr>
+            <th>Game</th>
+            <th>Opponent</th>
+            <th>Duration</th>
+        </tr>
+        {% for game in sentvites %}
+            <tr>
+                <td> {{ game['name'] }} </td>
+                <td> {{ game['opponent'] }} </td>
+                <td> {{ game['duration'] }} </td>
+            </tr>
+        {% endfor %}
+    </table>
+    </div>
+
+    <hr>
+    <div>
+        <h2>Past Games</h2>
+        <table class="table">
+            <tr>
+                <th>Game</th>
+                <th>Winner</th>
+                <th>Time Remaining</th>
+            </tr>
+            {% for game in pastgames %}
+                <tr>
+                    <td> {{ game['name'] }} </td>
+                    <td> {{ game['wu'] }} </td>
                     <td> {{ game['timeRemaining'] }}</td>
                 </tr>
             {% endfor %}

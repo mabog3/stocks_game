@@ -5,7 +5,6 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
 import datetime 
 from flask_sqlalchemy import SQLAlchemy
 import sys
@@ -73,30 +72,10 @@ def index():
         db.engine.execute("INSERT INTO portfolio (user_id, stock, quantity, price, game) VALUES (:user_id,:stock,:startingcash, :dollar, :game)", user_id=session["user_id"], stock="Cash", startingcash=startingcash, dollar=1, game=game)
         portfolio = db.engine.execute("SELECT stock, quantity, price FROM portfolio WHERE user_id=? AND game=?", session["user_id"], game).fetchall()
 
-    cash = round(db.engine.execute("SELECT * FROM portfolio WHERE stock=:cash AND user_id=:user_id AND game=:game", cash="Cash",user_id=session["user_id"], game=game).fetchall()[0]['quantity'], 2)
-    grand_total = cash
+    #cash = round(db.engine.execute("SELECT * FROM portfolio WHERE stock=:cash AND user_id=:user_id AND game=:game", cash="Cash",user_id=session["user_id"], game=game).fetchall()[0]['quantity'], 2)
+    x = calculate_portfolio_value(portfolio)
 
-    # determine current price, stock total value and grand total value
-    stockDictList = []
-
-    for stocks in portfolio:
-        stock = dict(stocks)
-        if stock['stock'] == "Cash":
-            price = 1
-            stock['quantity'] = cash
-            total = cash
-            stock.update({'price': price, 'total': total, 'quantity': cash})
-            stockDictList.append(stock)
-        else:
-            quantity = round(stock['quantity'], 2)
-            if quantity > 0.1: #in case of float errors
-                price = lookup(stock['stock'])['price']
-                total = stock['quantity'] * price
-                stock.update({'price': price, 'total': total, 'quantity': quantity})
-                grand_total += total
-                stockDictList.append(stock)
-
-    return render_template("index.html", games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name, stocks=stockDictList, cash=cash, total=grand_total, game=game) #need to implement game choice
+    return render_template("index.html", games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name, stocks=x[1], total=x[0], game=game) #need to implement game choice
 
 @app.route("/actionpage", methods=["GET", "POST"])
 @login_required
@@ -134,7 +113,7 @@ def actionpage():
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
-        return render_template("actionpage.html", stocks = db.engine.execute("SELECT * FROM portfolio WHERE user_id = :user_id AND quantity > 0", user_id=session["user_id"]), games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']))
+        return render_template("actionpage.html", stocks = db.engine.execute("SELECT * FROM portfolio WHERE user_id = :user_id AND quantity > 0 AND game=:game", user_id=session["user_id"], game=session['game']), games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']))
 
 @app.route("/gamescreen", methods=["GET", "POST"])
 @login_required
@@ -144,13 +123,66 @@ def gamescreen():
     for game in currentgames:
         num = game['gamenumber']
         timeRemaining(num)
-    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id'])
+    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
+    cgame = []
+    for games in currentgames: 
+        game = dict(games)
+        num = game['gamenumber'] 
+        p1 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player1"]
+        p2 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player2"]
+        if int(p1) == int(session['user_id']):
+            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p2).fetchall()[0]['username'])
+        else: 
+            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p1).fetchall()[0]['username'])
+        game.update({'opponent': opponent})
+        cgame.append(game)
+    gameinvites = db.engine.execute("SELECT * FROM game WHERE player2 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
+    igame = []
+    for games in gameinvites: 
+        game = dict(games)
+        num = game['gamenumber'] 
+        p1 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player1"]
+        opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p1).fetchall()[0]['username'])
+        duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
+        game.update({'opponent': opponent})
+        game.update({'duration': duration})
+        igame.append(game)
+    
+    sentinvites = db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
+    sgame = []
+    for games in sentinvites: 
+        game = dict(games)
+        num = game['gamenumber'] 
+        p2 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player2"]
+        opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p2).fetchall()[0]['username'])
+        duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
+        game.update({'opponent': opponent})
+        game.update({'duration': duration})
+        sgame.append(game)
+
+    pastgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=1", user_id=session['user_id']).fetchall()
+    pgame = []
+    for games in pastgames:
+        game = dict(games)
+        winner = game['winner']
+        wu = db.engine.execute("SELECT * FROM users WHERE id=?", winner).fetchall()[0]['username']
+        if not wu: #winner is 0 when tie 
+            wu = "Tie"
+        game.update({'wu':wu})
+        pgame.append(game)
     if request.method == "POST":
-        return render_template("gamescreen.html", currentgames=currentgames)
+        if request.form.getlist("accept"):
+            accepts = request.form.getlist("accept")
+            current = datetime.datetime.now()
+            for accept in accepts: 
+                db.engine.execute("UPDATE game SET initialized=1, startdate=:start WHERE gamenumber=:game", start=current.strftime("%Y-%m-%d %H:%M:%S"), game=int(accept))
+            #cgame = list(filter(lambda i: i['id'] != 2, test_list)) 
+            return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
+        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
-        return render_template("gamescreen.html", currentgames=currentgames)
+        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
 
 @app.route("/newgame", methods=["GET", "POST"])
 @login_required
@@ -162,7 +194,7 @@ def newgame():
             return render_template("newgame.html")
         startingcash = request.form.get("startingcash")
         if not startingcash:
-            startingcash = 10000 #NOT WORKING FOR SOME REASON - ALL OF THE "NOT" STUFF - DB STILL NULL if i put in date
+            startingcash = 10000 
         days = request.form.get("days")
         if not days:
             days = 0
@@ -183,9 +215,8 @@ def newgame():
             flash("invalid username")
             return render_template("newgame.html")
         player2=db.engine.execute("SELECT * FROM users WHERE username=?",player2uname).fetchall()[0]['id']
-        current = datetime.datetime.now() #maybe more exact to use datetime.now() - LOOK INTO IT, TODO 
-        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, weeks, days, finished, startdate) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :weeks, :days, :finished, :start)",
-                  player1=session["user_id"], player2=player2, initialized=1, name=gamename, startingcash=startingcash, years=years, weeks=weeks, days=days, finished=0, start=current.strftime("%Y-%m-%d %H:%M:%S"))
+        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, weeks, days, finished) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :weeks, :days, :finished)",
+                  player1=session["user_id"], player2=player2, initialized=0, name=gamename, startingcash=startingcash, years=years, weeks=weeks, days=days, finished=0)
 
 
         # stock name is valid
@@ -205,10 +236,47 @@ def timeRemaining(game):
     togo = duration - diff 
     #return(elapsed)
     if togo > datetime.timedelta(seconds=1):
-        db.engine.execute("UPDATE game SET timeRemaining=:time WHERE gamenumber=:game", time=str(str(togo)), game=game)
+        db.engine.execute("UPDATE game SET timeRemaining=:time WHERE gamenumber=:game", time=str(togo).split(".")[0], game=game)
     else: 
-        db.engine.execute("UPDATE game SET timeRemaining=0 AND finished=1 WHERE gamenumber=:game", game=game)
-        #TODO: CALC WINNER
+        db.engine.execute("UPDATE game SET timeRemaining=0, finished=1 WHERE gamenumber=:game", game=game)
+        player1 = int(db.engine.execute("SELECT * FROM game WHERE gamenumber = ?", game).fetchall()[0]['player1'])
+        player2 = int(db.engine.execute("SELECT * FROM game WHERE gamenumber = ?", game).fetchall()[0]['player2'])
+        port1 = db.engine.execute("SELECT * FROM portfolio WHERE user_id=:user_id AND game=:game", user_id=player1, game=game).fetchall()
+        port2 = db.engine.execute("SELECT * FROM portfolio WHERE user_id=:user_id AND game=:game", user_id=player2, game=game).fetchall()
+        tot1 = calculate_portfolio_value(port1)[0]
+        tot2 = calculate_portfolio_value(port2)[0]
+        db.engine.execute("UPDATE game SET p1total=:tot1, p2total=:tot2 WHERE gamenumber=:game", tot1=tot1, tot2=tot2, game=game)
+
+        if tot1 > tot2:
+            winner = player1
+        elif tot2 > tot1: 
+            winner = player2
+        else: 
+            winner = 0 #if there's a tie, winner will be set to 0 
+        db.engine.execute("UPDATE game SET winner=:winner WHERE gamenumber=:game", game=game, winner=winner)
+
+
+def calculate_portfolio_value(portfolio):
+    grand_total = 0
+    # determine current price, stock total value and grand total value
+    stockDictList = []
+    for stocks in portfolio:
+        stock = dict(stocks)
+        if stock['stock'] == "Cash":
+            total = stock['quantity'] 
+            stock.update({'total': total})
+            grand_total += total
+            stockDictList.append(stock)
+        else:
+            quantity = round(stock['quantity'], 2)
+            if quantity > 0.1: #in case of float errors
+                price = lookup(stock['stock'])['price']
+                total = stock['quantity'] * price
+                stock.update({'price': price, 'total': total, 'quantity': quantity})
+                grand_total += total
+                stockDictList.append(stock) 
+    return [grand_total, stockDictList]
+    
 
 
 def buy(symbol, shares, game):
@@ -325,8 +393,6 @@ def history():
         name = "None (personal portfolio)"
     # retrieve transactions
     transactions = db.engine.execute("SELECT * FROM transactions WHERE user_id = :user_id AND game=:game ORDER BY date DESC", user_id=session["user_id"], game=game).fetchall()
-    if not transactions:
-        return apology("You have no transactions to date.")
 
     return render_template('history.html', transactions=transactions, games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name)
 
@@ -336,7 +402,9 @@ def searchusers():
     if request.method == "POST":
         if request.form.get("username"):
             users = db.engine.execute("SELECT * FROM users WHERE username LIKE :search", search="%"+str(request.form.get("username"))+"%")
-        return render_template("searchusers.html", users=users)
+            return render_template("searchusers.html", users=users)
+        else:
+            return render_template("searchusers.html")
     else:
         return render_template("searchusers.html")
 
