@@ -139,8 +139,12 @@ def actionpage():
 @app.route("/gamescreen", methods=["GET", "POST"])
 @login_required
 def gamescreen():
-    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1", user_id=session['user_id'])
+    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall()
     uname=str(db.engine.execute("SELECT * FROM users WHERE id=:user_id", user_id=session['user_id']).fetchall()[0]['username'])
+    for game in currentgames:
+        num = game['gamenumber']
+        timeRemaining(num)
+    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id'])
     if request.method == "POST":
         return render_template("gamescreen.html", currentgames=currentgames)
 
@@ -153,7 +157,7 @@ def gamescreen():
 def newgame():
     if request.method == "POST":
         # ensure name of stock was submitted
-        if not ((request.form.get("player2")) and (request.form.get("gamename")) and (request.form.get("days") or request.form.get("years") or request.form.get("months"))):
+        if not ((request.form.get("player2")) and (request.form.get("gamename")) and (request.form.get("days") or request.form.get("years") or request.form.get("weeks"))):
             flash('Please input a game name, duration, and second player')
             return render_template("newgame.html")
         startingcash = request.form.get("startingcash")
@@ -167,10 +171,10 @@ def newgame():
         if not years:
             years = 0
         years = int(years)
-        months = request.form.get("months")
-        if not months:
-            months = 0
-        months = int(months)
+        weeks = request.form.get("weeks")
+        if not weeks:
+            weeks = 0
+        weeks = int(weeks)
 
         player2uname = request.form.get("player2")
         gamename = request.form.get("gamename")
@@ -179,9 +183,9 @@ def newgame():
             flash("invalid username")
             return render_template("newgame.html")
         player2=db.engine.execute("SELECT * FROM users WHERE username=?",player2uname).fetchall()[0]['id']
-        current = datetime.date.today() #maybe more exact to use datetime.now() - LOOK INTO IT, TODO 
-        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, months, days, finished, startdate) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :months, :days, :finished, :start)",
-                  player1=session["user_id"], player2=player2, initialized=1, name=gamename, startingcash=startingcash, years=years, months=months, days=days, finished=0, start=current.strftime("%Y-%m-%d"))
+        current = datetime.datetime.now() #maybe more exact to use datetime.now() - LOOK INTO IT, TODO 
+        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, weeks, days, finished, startdate) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :weeks, :days, :finished, :start)",
+                  player1=session["user_id"], player2=player2, initialized=1, name=gamename, startingcash=startingcash, years=years, weeks=weeks, days=days, finished=0, start=current.strftime("%Y-%m-%d %H:%M:%S"))
 
 
         # stock name is valid
@@ -191,18 +195,20 @@ def newgame():
     else:
         return render_template("newgame.html")
 
-def time(game):
-    current = datetime.date.today() #.strftime("%Y-%m-%d")
+def timeRemaining(game):
+    current = datetime.datetime.now() #.strftime("%Y-%m-%d")
     g = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", game).fetchall()[0]
-    start = datetime.datetime.strptime(str(g['start']), "%Y-%m-%d") #convert date string in db to datetime obj
-    years = g['years']
-    months = g['months']
-    days = g['days']
-    diff = current - start #timedelta obj
-    if (diff.days >= days and diff.years >= years and diff.months >= months):
-        db.engine.execute("UPDATE game SET finished=1 WHERE gamenumber=:game", game)
+    start = datetime.datetime.strptime(str(g['startdate']), "%Y-%m-%d %H:%M:%S") #convert date string in db to datetime obj
 
-        #TODO: CALC WINNER 
+    duration = datetime.timedelta(days=((int(g['years']) * 365) + int(g['days'])), weeks=int(g['weeks']))
+    diff = current - start #timedelta obj
+    togo = duration - diff 
+    #return(elapsed)
+    if togo > datetime.timedelta(seconds=1):
+        db.engine.execute("UPDATE game SET timeRemaining=:time WHERE gamenumber=:game", time=str(str(togo)), game=game)
+    else: 
+        db.engine.execute("UPDATE game SET timeRemaining=0 AND finished=1 WHERE gamenumber=:game", game=game)
+        #TODO: CALC WINNER
 
 
 def buy(symbol, shares, game):
