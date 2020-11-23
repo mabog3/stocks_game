@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Current Games
+{% endblock %}
+
+{% block main %}
+    <div class = 'centered'>
+        <h1>Games</h1>
+    </div>
+    <div>
+        <a class = "btn btn-primary" href="/newgame">New Game</a>
+    </div>
+    <form action="{{ url_for('gamescreen') }}" method="post">
+        <fieldset>
+            <div></div>
+        </fieldset>
+     </form>
+     <hr>
+    <div>
+        <h2>Current Games</h2>
+        <table class="table">
+            <tr>
+                <th>Game</th>
+                <th>Opponent</th>
+                <th>Time Remaining</th>
+            </tr>
+            {% for game in currentgames %}
+                <tr>
+                    <td> {{ game['name'] }} </td>
+                    <td> implement opponent </td>
+                    <td> implement remaining time</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock %}

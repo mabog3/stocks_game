@@ -7,18 +7,32 @@
 {% block main %}
     <div class="container">
         <h1>Portfolio</h1>
+        <div>
+            <h3>Current game:
+            {% if not name %}
+                None (personal portfolio)
+            {% endif %}
+            {% if name %}
+                {{ name }}
+            {% endif %}
+            </h3>
+        </div>
         <form action="{{ url_for('index') }}" method="post">
             <fieldset>
                 <div class="form-group centered">
                     <select name="gamechoice" class = "dropdown-header centered">
                         <option class="dropdown-item" btm selected disabled value="">Game</option></option>
-                        <option class="dropdown-item" value=NULL>No Game</option></option>
+                        <option class="dropdown-item" value=0>No Game</option></option>
                         {% for game in games %}
                             {% if game.initialized == 1 %}
                                 <option class="dropdown-item" value = {{ game.gamenumber }}> {{ game.name }} </option>
                             {% endif %}
                         {% endfor %}
                     </select>
+                </div>
+                <div class="form-group">
+                <button class="btn btn-primary" type="submit">Choose Game</button>
+            </div>
             </fieldset>
         </form>
 
@@ -33,7 +47,7 @@
             {% for stock in stocks %}
                 {% if stock['stock'] == 'Cash' %}
                     <tr>
-                        <td>{{ stock['stock'].upper() }}</td>
+                        <td>{{ stock['stock'] }}</td>
                         <td></td>
                         <td></td>
                         <td>{{ stock['total'] | usd }}</td>

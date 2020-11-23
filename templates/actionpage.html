@@ -8,45 +8,102 @@
     <div class = "centered">
         <h1>Manage Assets</h1>
     </div>
-    <div class = "centered">
-        <h1>Buy Stock</h1>
+    <div>
+        <h3>Current game:
+        {% if not name %}
+            None (personal portfolio)
+        {% endif %}
+        {% if name %}
+            {{ name }}
+        {% endif %}
+        </h3>
+        <hr>
     </div>
-    <form action="{{ url_for('actionpage') }}" method="post">
-        <fieldset>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="buysymbol" placeholder="Stock Symbol" type="text"/>
+    <div class="container">
+        <form action="{{ url_for('actionpage') }}" method="post">
+            <fieldset>
+                <div class="form-group centered">
+                    <select name="gamechoice" class = "dropdown-header centered">
+                        <option class="dropdown-item" btm selected disabled value="">Game</option></option>
+                        <option class="dropdown-item" value=0>No Game</option></option>
+                        {% for game in games %}
+                            {% if game.initialized == 1 %}
+                                <option class="dropdown-item" value = {{ game.gamenumber }}> {{ game.name }} </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                <button class="btn btn-primary" type="submit">Choose Game</button>
             </div>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="buyshares" type = "number" step = 0.1 min = 0.01 placeholder="# of Shares"/>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary" type="submit">Buy</button>
-            </div>
-        </fieldset>
-    </form>
+            </fieldset>
+        </form>
+    </div>
 
-    <div class = "centered">
-        <h1>Sell Stock</h1>
+    <div class="d-flex flex-row centered">
+        <div class = "card">
+            <div class = "centered">
+                <h1>Buy Stock</h1>
+            </div>
+
+            <form action="{{ url_for('actionpage') }}" method="post">
+                <fieldset class="card-body">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="buysymbol" placeholder="Stock Symbol" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="buyshares" type = "number" step = "any" min = 0.01 placeholder="# of Shares"/>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Buy</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class = "centered">
+                <h1>Sell Stock</h1>
+            </div>
+            <form action="{{ url_for('actionpage') }}" method="post">
+                <fieldset class="card-body">
+                    <div class="form-group centered">
+                        <select name="sellsymbol" class = "dropdown-header centered">
+                            <option class="dropdown-item" btm selected disabled value="">Stock</option></option>
+                            {% for stock in stocks %}
+                                {% if stock.stock != "Cash" %}
+                                    <option class="dropdown-item" value = {{ stock.stock }}> {{stock.stock}} </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" type = "number" step = "any" min=0.01 name="sellshares" placeholder="# of Shares"/>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Sell</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="card">
+            {% if not name %}
+                <div class = "centered">
+                <h1>Add Cash</h1>
+                </div>
+                <form action="{{ url_for('actionpage') }}" method="post">
+                    <fieldset class="card-body">
+                        <div class="form-group">
+                            <input autocomplete="off" autofocus class="form-control" name="cashInput" type="number" step = "any" min=0 placeholder="Cash Amount"/>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Add</button>
+                        </div>
+                    </fieldset>
+                </form>
+            {% endif %}
+        </div>
     </div>
-    <form action="{{ url_for('actionpage') }}" method="post">
-        <fieldset>
-            <div class="form-group centered">
-                <select name="sellsymbol" class = "dropdown-header centered">
-                    <option class="dropdown-item" btm selected disabled value="">Stock</option></option>
-                    {% for stock in stocks %}
-                        {% if stock.stock != "Cash" %}
-                            <option class="dropdown-item" value = {{ stock.stock }}> {{stock.stock}} </option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" type = "number" step = 0.1 min=0.01 name="sellshares" placeholder="# of Shares"/>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary" type="submit">Sell</button>
-            </div>
-        </fieldset>
-    </form>
 
 {% endblock %}
