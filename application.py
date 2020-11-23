@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+import datetime 
 from flask_sqlalchemy import SQLAlchemy
 import sys
 
@@ -152,12 +153,25 @@ def gamescreen():
 def newgame():
     if request.method == "POST":
         # ensure name of stock was submitted
-        if not (request.form.get("player2")) and (request.form.get("gamename") and (request.form.get("days") or request.form.get("years") or request.form.get("months")))):
+        if not ((request.form.get("player2")) and (request.form.get("gamename")) and (request.form.get("days") or request.form.get("years") or request.form.get("months"))):
             flash('Please input a game name, duration, and second player')
             return render_template("newgame.html")
         startingcash = request.form.get("startingcash")
         if not startingcash:
-            startingcash = 0
+            startingcash = 10000 #NOT WORKING FOR SOME REASON - ALL OF THE "NOT" STUFF - DB STILL NULL if i put in date
+        days = request.form.get("days")
+        if not days:
+            days = 0
+        days = int(days)
+        years = request.form.get("years")
+        if not years:
+            years = 0
+        years = int(years)
+        months = request.form.get("months")
+        if not months:
+            months = 0
+        months = int(months)
+
         player2uname = request.form.get("player2")
         gamename = request.form.get("gamename")
         rows = db.engine.execute("SELECT * FROM users WHERE username = ?", request.form.get("player2")).fetchall()
@@ -165,9 +179,9 @@ def newgame():
             flash("invalid username")
             return render_template("newgame.html")
         player2=db.engine.execute("SELECT * FROM users WHERE username=?",player2uname).fetchall()[0]['id']
-
-        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash) VALUES (:player1, :player2, :name, :initialized, :startingcash)",
-                  player1=session["user_id"], player2=player2, initialized=1, name=gamename, startingcash=startingcash)
+        current = datetime.date.today() #maybe more exact to use datetime.now() - LOOK INTO IT, TODO 
+        db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, months, days, finished, startdate) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :months, :days, :finished, :start)",
+                  player1=session["user_id"], player2=player2, initialized=1, name=gamename, startingcash=startingcash, years=years, months=months, days=days, finished=0, start=current.strftime("%Y-%m-%d"))
 
 
         # stock name is valid
@@ -176,6 +190,19 @@ def newgame():
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("newgame.html")
+
+def time(game):
+    current = datetime.date.today() #.strftime("%Y-%m-%d")
+    g = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", game).fetchall()[0]
+    start = datetime.datetime.strptime(str(g['start']), "%Y-%m-%d") #convert date string in db to datetime obj
+    years = g['years']
+    months = g['months']
+    days = g['days']
+    diff = current - start #timedelta obj
+    if (diff.days >= days and diff.years >= years and diff.months >= months):
+        db.engine.execute("UPDATE game SET finished=1 WHERE gamenumber=:game", game)
+
+        #TODO: CALC WINNER 
 
 
 def buy(symbol, shares, game):
@@ -211,7 +238,7 @@ def buy(symbol, shares, game):
 
     # add transaction to transaction db for history
     db.engine.execute("INSERT INTO transactions (user_id, stock, quantity, price, date, type, total, game) VALUES (:user_id, :stock, :quantity, :price, :date, :type1, :total, :game)",
-                                 user_id=session["user_id"], stock=quote["symbol"], type1='BOUGHT', total=cost, quantity=float(shares), price=quote['price'], date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), game=game)
+                                 user_id=session["user_id"], stock=quote["symbol"], type1='BOUGHT', total=cost, quantity=float(shares), price=quote['price'], date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), game=game)
 
     # check if stock already owned for db organization
     rows = db.engine.execute("SELECT quantity FROM portfolio WHERE stock=:stock AND user_id=:user_id AND game=:game", stock=quote["symbol"], user_id=session['user_id'], game=game).fetchall()
@@ -267,7 +294,7 @@ def sell(symbol, shares, game):
 
     # add transaction to transaction db for history
     db.engine.execute("INSERT INTO transactions (user_id, stock, quantity, price, date, type, total, game) VALUES (:user_id, :stock, :quantity, :price, :date, :type1, :total, :game)",
-                user_id=session["user_id"], total=price1, stock=quote["symbol"], type1='SOLD', quantity=round(float(shares), 2), price=quote['price'], date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),game=game)
+                user_id=session["user_id"], total=price1, stock=quote["symbol"], type1='SOLD', quantity=round(float(shares), 2), price=quote['price'], date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),game=game)
     if float(shares) == 1:
         words = ["share", "was"]
     else:
@@ -409,6 +436,7 @@ def register():
                     # login user automatically and remember session
                     rows = db.engine.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username")).fetchall()
                     session["user_id"] = rows[0]["id"]
+                    session['game'] = 0
                     # redirect to home page
                     return redirect(url_for("index"))
                 else:
