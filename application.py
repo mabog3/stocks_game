@@ -109,7 +109,7 @@ def actionpage():
             if check:
                 flash('Success')
                 return render_template("addcash.html")
-        return render_template("actionpage.html", stocks = db.engine.execute("SELECT * FROM portfolio WHERE user_id = :user_id AND quantity > 0", user_id=session["user_id"]),games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']),name=name)
+        return render_template("actionpage.html", stocks = db.engine.execute("SELECT * FROM portfolio WHERE user_id = :user_id AND quantity > 0 AND game=:game", user_id=session["user_id"], game=session['game']),games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']),name=name)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
@@ -117,44 +117,12 @@ def actionpage():
 
 @app.route("/gamescreen", methods=["GET", "POST"])
 @login_required
-def gamescreen():
-    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall()
-    uname=str(db.engine.execute("SELECT * FROM users WHERE id=:user_id", user_id=session['user_id']).fetchall()[0]['username'])
-    for game in currentgames:
-        num = game['gamenumber']
-        timeRemaining(num)
-    currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
-    cgame = []
-    for games in currentgames: 
-        game = dict(games)
-        num = game['gamenumber'] 
-        p1 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player1"]
-        p2 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player2"]
-        if int(p1) == int(session['user_id']):
-            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p2).fetchall()[0]['username'])
-        else: 
-            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p1).fetchall()[0]['username'])
-        game.update({'opponent': opponent})
-        cgame.append(game)
-    gameinvites = db.engine.execute("SELECT * FROM game WHERE player2 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
-    igame = []
-    for games in gameinvites: 
-        game = dict(games)
-        num = game['gamenumber'] 
-        p1 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player1"]
-        opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p1).fetchall()[0]['username'])
-        duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
-        game.update({'opponent': opponent})
-        game.update({'duration': duration})
-        igame.append(game)
-    
+def gamescreen():   
     sentinvites = db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
     sgame = []
     for games in sentinvites: 
         game = dict(games)
-        num = game['gamenumber'] 
-        p2 = db.engine.execute("SELECT * FROM game WHERE gamenumber=?", num).fetchall()[0]["player2"]
-        opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", p2).fetchall()[0]['username'])
+        opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game['player2']).fetchall()[0]['username'])
         duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
         game.update({'opponent': opponent})
         game.update({'duration': duration})
@@ -164,12 +132,12 @@ def gamescreen():
     pgame = []
     for games in pastgames:
         game = dict(games)
-        winner = game['winner']
-        wu = db.engine.execute("SELECT * FROM users WHERE id=?", winner).fetchall()[0]['username']
+        wu = db.engine.execute("SELECT * FROM users WHERE id=?", game['winner']).fetchall()[0]['username']
         if not wu: #winner is 0 when tie 
             wu = "Tie"
         game.update({'wu':wu})
         pgame.append(game)
+
     if request.method == "POST":
         if request.form.getlist("accept"):
             accepts = request.form.getlist("accept")
@@ -177,11 +145,54 @@ def gamescreen():
             for accept in accepts: 
                 db.engine.execute("UPDATE game SET initialized=1, startdate=:start WHERE gamenumber=:game", start=current.strftime("%Y-%m-%d %H:%M:%S"), game=int(accept))
             #cgame = list(filter(lambda i: i['id'] != 2, test_list)) 
-            return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
+        currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall()
+        for game in currentgames:
+            timeRemaining(game['gamenumber'])
+        currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
+        cgame = []
+        for games in currentgames: 
+            game = dict(games)
+            if int(game["player1"]) == int(session['user_id']):
+                opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player2"]).fetchall()[0]['username'])
+            else: 
+                opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player1"]).fetchall()[0]['username'])
+            game.update({'opponent': opponent})
+            cgame.append(game)
+        gameinvites = db.engine.execute("SELECT * FROM game WHERE player2 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
+        igame = []
+        for games in gameinvites: 
+            game = dict(games)
+            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player1"]).fetchall()[0]['username'])
+            duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
+            game.update({'opponent': opponent})
+            game.update({'duration': duration})
+            igame.append(game)
         return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
+        currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall()
+        for game in currentgames:
+            timeRemaining(game['gamenumber'])
+        currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
+        cgame = []
+        for games in currentgames: 
+            game = dict(games)
+            if int(game["player1"]) == int(session['user_id']):
+                opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player2"]).fetchall()[0]['username'])
+            else: 
+                opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player1"]).fetchall()[0]['username'])
+            game.update({'opponent': opponent})
+            cgame.append(game)
+        gameinvites = db.engine.execute("SELECT * FROM game WHERE player2 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
+        igame = []
+        for games in gameinvites: 
+            game = dict(games)
+            opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game["player1"]).fetchall()[0]['username'])
+            duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
+            game.update({'opponent': opponent})
+            game.update({'duration': duration})
+            igame.append(game)
         return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
 
 @app.route("/newgame", methods=["GET", "POST"])
@@ -254,7 +265,8 @@ def timeRemaining(game):
         else: 
             winner = 0 #if there's a tie, winner will be set to 0 
         db.engine.execute("UPDATE game SET winner=:winner WHERE gamenumber=:game", game=game, winner=winner)
-
+        if winner:
+            db.engine.execute("UPDATE users SET wins=wins+1 WHERE id=:winner", winner=winner)
 
 def calculate_portfolio_value(portfolio):
     grand_total = 0
@@ -283,10 +295,6 @@ def buy(symbol, shares, game):
     if not (symbol and shares):
         flash("Please input a valid stock symbol and share quantity.")
         return []
-    # ensure number of shares is valid
-    # if not str.isdecimal(shares):
-    #     flash('Share quantity must be a positive integer')
-    #     return []
     if float(shares) <= 0:
         flash('Share quantity must be a positive real number.')
         return []
@@ -329,7 +337,7 @@ def buy(symbol, shares, game):
         words = ["share", "was"]
     else:
         words = ["shares", "were"]
-    return [words, round(quote['price'], 2), cost]
+    return [words, round(quote['price'], 2), cost] #TODO: USE WORDS IN CUSTOM FLASH. same goes for sell
 
 def sell(symbol, shares, game):
     """Sell shares of stock"""
@@ -376,6 +384,36 @@ def sell(symbol, shares, game):
 
     return [words, shares, symbol, quote['price'], price1]
 
+@app.route("/profile",methods=["GET", "POST"])
+@login_required
+def profile():
+    user = db.engine.execute("SELECT * FROM users WHERE id=:user_id", user_id=session['user_id']).fetchall()[0]
+    if not user['wins']: 
+        db.engine.execute("UPDATE users SET wins=0 WHERE id=:user_id", user_id=session['user_id'])
+        user = db.engine.execute("SELECT * FROM users WHERE id=:user_id", user_id=session['user_id']).fetchall()[0]
+    if request.method == "POST":
+        if request.form.get("password"):
+            if check_password_hash(user['hash'], request.form.get("password")):
+                # if not (request.form.get("username") or request.form.get("newPassword") or request.form.get("desc")):
+                #     flash("Please select an action!") people may want to set their description to be blank 
+                db.engine.execute("UPDATE users SET description=:desc WHERE id=:user_id", desc=request.form.get("desc"), user_id=session['user_id'])
+                if request.form.get("username"):
+                    rows = db.engine.execute("SELECT * FROM users WHERE username = ?", request.form.get("username")).fetchall()
+                    if (len(rows) < 1):
+                        db.engine.execute("UPDATE users SET username=:uname WHERE id=:user_id", uname=request.form.get("username"), user_id=session['user_id'])
+                        flash("Successfully updated username.")
+                    else: 
+                        flash("That username is already taken.")
+                if request.form.get("newPassword"):
+                    pw = generate_password_hash(request.form.get("newPassword"))
+                    db.engine.execute("UPDATE users SET hash=:pw WHERE id=:user_id", pw=pw, user_id=session['user_id'])
+                    flash("Successfully updated password.")
+                user = db.engine.execute("SELECT * FROM users WHERE id=:user_id", user_id=session['user_id']).fetchall()[0]
+            else: 
+                flash("Incorrect password.")
+        return render_template("profile.html", user=user)    
+    else: 
+        return render_template("profile.html", user=user)
 
 @app.route("/history",methods=["GET", "POST"])
 @login_required
@@ -394,11 +432,11 @@ def history():
     # retrieve transactions
     transactions = db.engine.execute("SELECT * FROM transactions WHERE user_id = :user_id AND game=:game ORDER BY date DESC", user_id=session["user_id"], game=game).fetchall()
 
-    return render_template('history.html', transactions=transactions, games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name)
+    return render_template('history.html', transactions=transactions, games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id) AND initialized=1", user_id=session['user_id']), name=name)
 
 @app.route("/searchusers", methods=["GET", "POST"])
 @login_required
-def searchusers():
+def searchusers(): #TODO: Make this a 'get' with query strings, like other searches 
     if request.method == "POST":
         if request.form.get("username"):
             users = db.engine.execute("SELECT * FROM users WHERE username LIKE :search", search="%"+str(request.form.get("username"))+"%")
@@ -503,10 +541,11 @@ def register():
                 rows = db.engine.execute("SELECT * FROM users WHERE username = ?", username).fetchall()
                 if len(rows) < 1:
                     # add user to database
-                    x = db.engine.execute("INSERT INTO users (username, hash) VALUES (?, ?)",
-                                   username, generate_password_hash(pw))
+                    x = db.engine.execute("INSERT INTO users (username, hash, wins, description) VALUES (?, ?, ?, ?)",
+                                   username, generate_password_hash(pw), 0, "")
                     if not x:
-                        return apology('Registration error')
+                        flash('Registration error')
+                        return render_template("register.html")
                     # login user automatically and remember session
                     rows = db.engine.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username")).fetchall()
                     session["user_id"] = rows[0]["id"]
@@ -519,6 +558,7 @@ def register():
                 flash('Passwords do not match.')
         else:
             flash("Please fill out all fields.")
+        return render_template("register.html")
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
