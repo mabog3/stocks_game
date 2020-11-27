@@ -1,5 +1,41 @@
 {% extends "layout.html" %}
 
+{% block scripts %}
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        pw = document.getElementById("pw")
+        pw.addEventListener('change', function() {
+            console.log("w \n");
+            if (pw.value.length < 8) {
+                console.log("bad")
+                document.getElementById("pwtext").innerHTML = "Password must be at least 8 chracters long"
+                document.getElementById("sub").disabled = true;
+                pw.classList.add('is-invalid')
+            }
+            else {
+                document.getElementById("pwtext").innerHTML = ""
+                document.getElementById("sub").disabled = false;
+                pw.classList.remove('is-invalid')
+            }
+        })
+        cf = document.getElementById("cf")
+        cf.addEventListener('change', function() {
+            if (cf.value != pw.value) {
+                document.getElementById("cftext").innerHTML = "Passwords do not match"
+                document.getElementById("sub").disabled = true;
+                cf.classList.add('is-invalid')
+            }
+            else {
+                document.getElementById("cftext").innerHTML = ""
+                document.getElementById("sub").disabled = false;
+                cf.classList.remove('is-invalid')
+            }
+        })
+    })
+</script>
+
+{% endblock %} 
+
 {% block title %}
     Register
 {% endblock %}
@@ -9,16 +45,28 @@
         <fieldset>
             <p class="help-block">Register</p>
             <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text" required>
+                <input autocomplete="off" autofocus class="form-control" id="un" name="username" placeholder="Username" type="text" required>
             </div>
+            <small>
+                <div id="untext" class="text-danger"></div>
+            </small>
+            
             <div class="form-group">
-                <input class="form-control" name="password" placeholder="Password" type="password" required>
+                <input class="form-control" id="pw" name="password" placeholder="Password" type="password" required>
             </div>
+            <small>
+                <div id="pwtext" class="text-danger"></div>
+            </small>
+            
             <div class="form-group">
-                <input class="form-control" name="confirmation" placeholder="Confirm password" type="password" required>
+                <input class="form-control" name="confirmation" id="cf" placeholder="Confirm password" type="password" required>
             </div>
+            <small>
+                <div id="cftext" class="text-danger"></div>
+            </small>
+            
             <div class="form-group">
-                <button class="btn btn-default" type="submit">Register</button>
+                <button class="btn btn-primary" id="sub" type="submit">Register</button>
             </div>
         </fieldset>
     </form>

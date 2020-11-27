@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+    
 {% block title %}
     Stock Index
 {% endblock %}
@@ -24,7 +24,27 @@
             </tr>
             {% for user in users %}
                 <tr>
-                    <td>{{ user['username'] }}</td>
+                    <td>
+                        <div class="card" style="width: 100%;">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ user['username'] }}</h5>
+                          <a class="btn btn-primary" data-toggle="collapse" href="#{{ user['username'] }}" role="button" aria-expanded="false">
+                                  More info
+                           </a>
+                          <div class="collapse" id="{{ user['username'] }}">
+                              <div class="card card-body">
+                                <p>{{ user.description }}</p> 
+                                <p>Wins: {{ user.wins }}</p> 
+                                <form action="{{ url_for('newgame') }}" method="POST">
+                                    <button type="submit" class="btn btn-primary" name="invite" value="{{ user.username }}">Send Invite</button>
+                                </form>                               
+                              </div>
+                          </div>
+
+          
+                        </div>
+                      </div>
+                    </td>
                 </tr>
             {% endfor %}
         </table>

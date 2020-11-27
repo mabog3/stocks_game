@@ -17,15 +17,24 @@
                 <input autocomplete="off" autofocus class="form-control" name="gamename" placeholder="Game Name" type="text" required/>
             </div>
             <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="player2" placeholder="Second Player" type="text" required/>
+                <input autocomplete="off" autofocus class="form-control" name="player2" value="{{ uname }}" placeholder="Second Player" type="text" required/>
             </div>
             <div class="form-group">
                 <input autocomplete="off" autofocus class="form-control" name="startingcash" type = "number" step = 0.1 min = 1 placeholder="Starting Cash"/>
             </div>
-            <div class="form-group"> Duration:
-                <input autocomplete="off" autofocus class="form-control" name="years" type = "number" step = 1 min = 0 placeholder="Years"/>
-                <input autocomplete="off" autofocus class="form-control" name="weeks" type = "number" step = 1 min = 0 placeholder="Weeks"/>
-                <input autocomplete="off" autofocus class="form-control" name="days" type = "number" step = 1 min = 0 placeholder="Days"/>
+            <div class="form-group">
+                Duration:
+                <div class="form-row" style="width: 100%;">
+                    <div class = "col-auto">
+                        <input autocomplete="off" autofocus class="form-control" name="years" type = "number" step = 1 min = 0 placeholder="Years"/>
+                    </div>
+                    <div class = "col-auto">
+                        <input autocomplete="off" autofocus class="form-control" name="weeks" type = "number" step = 1 min = 0 placeholder="Weeks"/>
+                    </div>
+                    <div class = "col-auto">
+                        <input autocomplete="off" autofocus class="form-control" name="days" type = "number" step = 1 min = 0 placeholder="Days"/>
+                    </div>
+                </div> 
             </div>
             <div class="form-group">
                 <button class="btn btn-primary" type="submit">Send Invite</button>

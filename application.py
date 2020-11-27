@@ -132,7 +132,9 @@ def gamescreen():
     pgame = []
     for games in pastgames:
         game = dict(games)
-        wu = db.engine.execute("SELECT * FROM users WHERE id=?", game['winner']).fetchall()[0]['username']
+        wu = db.engine.execute("SELECT * FROM users WHERE id=?", game['winner']).fetchall()
+        if len(wu) > 0:
+            wu = wu[0]['username']
         if not wu: #winner is 0 when tie 
             wu = "Tie"
         game.update({'wu':wu})
@@ -199,6 +201,10 @@ def gamescreen():
 @login_required
 def newgame():
     if request.method == "POST":
+        if request.form.getlist("invite"):
+            invites = request.form.getlist("invite")
+            for invite in invites:
+                return render_template("newgame.html", uname=str(invite))
         # ensure name of stock was submitted
         if not ((request.form.get("player2")) and (request.form.get("gamename")) and (request.form.get("days") or request.form.get("years") or request.form.get("weeks"))):
             flash('Please input a game name, duration, and second player')
@@ -228,6 +234,11 @@ def newgame():
         player2=db.engine.execute("SELECT * FROM users WHERE username=?",player2uname).fetchall()[0]['id']
         db.engine.execute("INSERT INTO game (player1, player2, name, initialized, starting_cash, years, weeks, days, finished) VALUES (:player1, :player2, :name, :initialized, :startingcash, :years, :weeks, :days, :finished)",
                   player1=session["user_id"], player2=player2, initialized=0, name=gamename, startingcash=startingcash, years=years, weeks=weeks, days=days, finished=0)
+        gameList=db.engine.execute("SELECT * FROM game WHERE player1=:player1 AND player2=:player2 AND name=:gamename AND initialized=:init AND starting_cash=:startingcash AND years=:years AND weeks=:weeks AND days=:days AND finished=0", 
+                                   player1=session["user_id"], player2=player2, gamename=gamename, init=0, startingcash=startingcash, years=years, weeks=weeks, days=days).fetchall()
+        game = int(gameList[len(gameList) - 1]['gamenumber']) #in case of duplicate games with the exact same parameters, get most recent
+        db.engine.execute("INSERT INTO portfolio (user_id, stock, quantity, price, game) VALUES (:user_id,:stock,:startingcash, :dollar, :game)", user_id=session["user_id"], stock="Cash", startingcash=startingcash, dollar=1, game=game)
+        db.engine.execute("INSERT INTO portfolio (user_id, stock, quantity, price, game) VALUES (:user_id,:stock,:startingcash, :dollar, :game)", user_id=player2, stock="Cash", startingcash=startingcash, dollar=1, game=game)
 
 
         # stock name is valid
