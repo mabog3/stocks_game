@@ -29,7 +29,7 @@ def apology(message, code=400):
     return render_template("apology.html", top=code, bottom=escape(message)), code
 
 
-def login_required(f): # from Finance distribution code (CS50 staff)
+def login_required(f): # citation: from Finance distribution code (CS50 staff)
     """
     Decorate routes to require login.
 
@@ -75,7 +75,7 @@ def historicalPlot(symbol):
 
 def histLookup(symbol): #with api
     try:
-        api_key = 'pk_0bae86416ffe40dea6604c256084d52d'
+        api_key = os.environ.get("API_KEY")
         url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/chart/5y/?token={api_key}"
         print(url)
         response = requests.get(url)
@@ -100,7 +100,7 @@ def lookup(symbol):
     """Look up quote for symbol."""
     # Contact API
     try:
-        api_key = 'pk_0bae86416ffe40dea6604c256084d52d'
+        api_key = os.environ.get("API_KEY")
         url = f"https://cloud-sse.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
         response = requests.get(url)
         response.raise_for_status()
