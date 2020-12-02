@@ -35,41 +35,47 @@
             </div>
             </fieldset>
         </form>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stock Symbol</th>
+                        <th>Share Quantity</th>
+                        <th>Share Price</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    {% if stock['stock'] == 'Cash' %}
+                        <tr>
+                            <td>{{ stock['stock'] }}</td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ stock['total'] | usd }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if stock.stock != 'Cash' %}
+                        <tr>
+                            <td>{{ stock['stock'].upper() }}</td>
+                            <td>{{ stock['quantity'] }}</td>
+                            <td>{{ stock['price'] | usd }}</td>
+                            <td>{{ stock['total'] | usd }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
 
-        <table class="table">
-            <tr>
-                <th>Stock Symbol</th>
-                <th>Share Quantity</th>
-                <th>Share Price</th>
-                <th>Total</th>
-                <th></th>
-            </tr>
-            {% for stock in stocks %}
-                {% if stock['stock'] == 'Cash' %}
-                    <tr>
-                        <td>{{ stock['stock'] }}</td>
-                        <td></td>
-                        <td></td>
-                        <td>{{ stock['total'] | usd }}</td>
-                    </tr>
-                {% endif %}
-                {% if stock.stock != 'Cash' %}
-                    <tr>
-                        <td>{{ stock['stock'].upper() }}</td>
-                        <td>{{ stock['quantity'] }}</td>
-                        <td>{{ stock['price'] | usd }}</td>
-                        <td>{{ stock['total'] | usd }}</td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            <tr>
-                <td><strong>TOTAL</strong></td>
-                <td></td>
-                <td></td>
-                <td>{{ total | usd }}</td>
-                <td></td>
-            </tr>
-        </table>
+                <tr>
+                    <td><strong>TOTAL</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ total | usd }}</td>
+                    <td></td>
+                </tr>
+                </tbody>                
+            </table>
+        </div>
     </div>
     <script src="{{url_for('static', filename='button.js')}}"></script>
 {% endblock %}

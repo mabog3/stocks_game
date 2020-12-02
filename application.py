@@ -9,7 +9,7 @@ import datetime
 from flask_sqlalchemy import SQLAlchemy
 import sys
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, historicalPlot
 
 
 
@@ -528,7 +528,8 @@ def quote():
             return render_template("quote.html")
         # stock name is valid
         else:
-            return render_template("quoted.html", symbol=quote["symbol"], name=quote["name"], price=quote["price"])
+            plot = historicalPlot(request.form.get("symbol"))
+            return render_template("quoted.html", symbol=quote["symbol"], name=quote["name"], price=quote["price"], plot=plot)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:

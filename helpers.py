@@ -1,6 +1,14 @@
 import os
 import requests
 import urllib.parse
+import yfinance as yf
+import yahoo_fin as fin
+import pandas as pd
+import numpy as np 
+import json
+import plotly
+import plotly.graph_objects as go
+from yahoo_fin import stock_info as si
 
 from flask import redirect, render_template, request, session
 from functools import wraps
@@ -21,7 +29,7 @@ def apology(message, code=400):
     return render_template("apology.html", top=code, bottom=escape(message)), code
 
 
-def login_required(f):
+def login_required(f): # from Finance distribution code (CS50 staff)
     """
     Decorate routes to require login.
 
@@ -34,6 +42,59 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+#test = yf.Ticker("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
+#print(test.info)
+
+def test(symbol):
+    try: 
+        #return(si.get_live_price(symbol))
+        return si.get_quote_table(symbol)
+    except: 
+        return None
+    
+def graph(symbol):
+    old = si.get_data(symbol)
+    old['date'] = old.index
+    fig = go.Figure(data=[go.Candlestick(x=old['date'],
+                                         open=old['open'],
+                                         high=old['high'],
+                                         low=old['low'],
+                                         close=old['close'])])
+    #fig.show()
+    
+def historicalPlot(symbol):
+    dat = si.get_data(symbol)
+    dat['date'] = dat.index
+    data=[go.Candlestick(x=dat['date'],
+                         open=dat['open'],
+                         high=dat['high'],
+                         low=dat['low'],
+                         close=dat['close'])]
+    graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
+    return graphJSON
+
+def histLookup(symbol): #with api
+    try:
+        api_key = 'pk_0bae86416ffe40dea6604c256084d52d'
+        url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/chart/5y/?token={api_key}"
+        print(url)
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+    
+    try:
+        # quote = response.json().loads()
+        #return quote
+        return response
+    except:
+        return None
+    
+#print(graph("AAPL"))
+    
+#histLookup("AAPL")
+
+
 
 def lookup(symbol):
     """Look up quote for symbol."""
@@ -45,10 +106,13 @@ def lookup(symbol):
         response.raise_for_status()
     except requests.RequestException:
         return None
-
-    # Parse response
     try:
         quote = response.json()
+    except (KeyError, TypeError, ValueError):
+        return None
+    # Parse response
+    try:
+        print(quote)
         return {
             "name": quote["companyName"],
             "price": float(quote["latestPrice"]),
@@ -61,3 +125,5 @@ def lookup(symbol):
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
+
+print(lookup("AAPL"))
