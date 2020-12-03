@@ -6,7 +6,8 @@
 
 {% block main %}
     <div class="container">
-        <h1>Search</h1>
+        <hr class='invisible'/>
+        <h3 class="display-4">Search Users</h3>
         <form action="{{ url_for('searchusers') }}" method="post">
             <fieldset>
                 <div class="input-group mb-4">
@@ -16,12 +17,13 @@
                         </button>
                     </div>
                 </div>
-                
             </fieldset>
         </form>
-        <h2>Search Results</h2>
+        <hr class='invisible'/>
+        <h3 class="display-5">Results</h3>
+        <hr class='invisible'/>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Username</th>
@@ -31,25 +33,28 @@
                 {% for user in users %}
                     <tr>
                         <td>
-                            <div class="card" style="width: 100%;">
-                            <div class="card-body">
-                              <h5 class="card-title">{{ user['username'] }}</h5>
-                              <a class="btn btn-primary" data-toggle="collapse" href="#{{ user['username'] }}" role="button" aria-expanded="false">
-                                      More info
-                               </a>
-                              <div class="collapse" id="{{ user['username'] }}">
-                                  <div class="card card-body">
-                                    <p>{{ user.description }}</p> 
-                                    <p>Wins: {{ user.wins }}</p> 
-                                    <form action="{{ url_for('newgame') }}" method="POST">
-                                        <button type="submit" class="btn btn-primary" name="invite" value="{{ user.username }}">Send Invite</button>
-                                    </form>                               
+                               <a data-toggle="collapse" href="#{{ user['username'] }}" role="button"  aria-controls="{{ user['username'] }}" aria-expanded="false" class="btn btn-secondary btn-block py-2 shadow-sm with-chevron">
+                                <p class="d-flex align-items-center justify-content-between mb-0 px-3 py-2">{{ user['username'] }}<i class="fa fa-angle-down"></i></p>
+                              </a>
+                              <div id="{{ user['username'] }}" class="collapse shadow-sm">
+                                <div class="card">
+                                  <div class="card-body">
+                                      <div class="row no-gutter">
+                                          <div class="col" style="width:auto;">
+                                            <p class="mb-0 text-muted">Wins: {{ user.wins }}</p>
+                                            </div>
+                                      </div>
+                                        {% if user.description %}
+                                        <div class="col" style="width:auto;">
+                                            <p class="mb-0">Description: {{ user.description }}</p>
+                                        </div>
+                                        {% endif %}
+                                        <form action="{{ url_for('newgame') }}" method="POST">
+                                            <button type="submit" class="btn btn-primary" name="invite" value="{{ user.username }}">Send Invite</button>
+                                        </form>  
                                   </div>
-                              </div>
-    
-              
-                            </div>
-                          </div>
+                                </div>
+                              </div>              
                         </td>
                     </tr>
                 {% endfor %}
