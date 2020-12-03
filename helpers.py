@@ -90,9 +90,6 @@ def histLookup(symbol): #with api
     except:
         return None
     
-#print(graph("AAPL"))
-    
-#histLookup("AAPL")
 
 
 
@@ -112,7 +109,6 @@ def lookup(symbol):
         return None
     # Parse response
     try:
-        print(quote)
         return {
             "name": quote["companyName"],
             "price": float(quote["latestPrice"]),
@@ -125,5 +121,3 @@ def lookup(symbol):
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
-
-print(lookup("AAPL"))

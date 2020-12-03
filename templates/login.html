@@ -1,17 +1,39 @@
 {% extends "layout.html" %}
 
+{% block scripts %}
+    <script src="{{url_for('static', filename='logreg.js')}}"></script>
+{% endblock %} 
+
 {% block title %}
     Log In
 {% endblock %}
 
 {% block main %}
-    <form action="/login" method="post">
-        <div class="form-group">
-            <input id="un" autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text" required>
+    <div class="row no-gutter">
+        <!-- The image half -->
+        <div class="col-md-6 d-none d-md-flex bg-image"></div>
+
+        <div class="col-md-6 bg-light">
+            <div class="login d-flex align-items-center py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-10 col-xl-7 mx-auto">
+                            <h3 class="display-4">Login</h3>
+                            <p class="text-muted mb-4">Enter your username and password below.</p>
+                            <form action="/login" method="post">
+                                <div class="form-group mb-3">
+                                    <input id="un" autocomplete="off" autofocus name="username" type="text" placeholder="Username" required class="form-control rounded-pill border-0 shadow-sm px-4">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <input id="pw" name="password" placeholder="Password" type="password" required class="form-control rounded-pill border-0 shadow-sm px-4 text-primary">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block text-uppercase mb-2 rounded-pill shadow-sm">Sign in</button>
+                                <a href="/register" class="btn btn-primary btn-block text-uppercase mb-2 rounded-pill shadow-sm">Register</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <input id="pw" class="form-control" name="password" placeholder="Password" type="password" required>
-        </div>
-        <button class="btn btn-primary" type="submit">Log In</button>
-    </form>
+    </div>
 {% endblock %}

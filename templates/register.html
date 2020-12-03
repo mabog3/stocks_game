@@ -1,39 +1,7 @@
 {% extends "layout.html" %}
 
 {% block scripts %}
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        pw = document.getElementById("pw")
-        pw.addEventListener('change', function() {
-            console.log("w \n");
-            if (pw.value.length < 8) {
-                console.log("bad")
-                document.getElementById("pwtext").innerHTML = "Password must be at least 8 chracters long"
-                document.getElementById("sub").disabled = true;
-                pw.classList.add('is-invalid')
-            }
-            else {
-                document.getElementById("pwtext").innerHTML = ""
-                document.getElementById("sub").disabled = false;
-                pw.classList.remove('is-invalid')
-            }
-        })
-        cf = document.getElementById("cf")
-        cf.addEventListener('change', function() {
-            if (cf.value != pw.value) {
-                document.getElementById("cftext").innerHTML = "Passwords do not match"
-                document.getElementById("sub").disabled = true;
-                cf.classList.add('is-invalid')
-            }
-            else {
-                document.getElementById("cftext").innerHTML = ""
-                document.getElementById("sub").disabled = false;
-                cf.classList.remove('is-invalid')
-            }
-        })
-    })
-</script>
-
+    <script src="{{url_for('static', filename='logreg.js')}}"></script>
 {% endblock %} 
 
 {% block title %}
@@ -41,33 +9,43 @@
 {% endblock %}
 
 {% block main %}
-    <form action="{{ url_for('register') }}" method="post">
-        <fieldset>
-            <p class="help-block">Register</p>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" id="un" name="username" placeholder="Username" type="text" required>
+    <div class="row no-gutter">
+        <!-- The image half -->
+        <div class="col-md-6 d-none d-md-flex bg-image"></div>
+
+        <div class="col-md-6 bg-light">
+            <div class="login d-flex align-items-center py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-10 col-xl-7 mx-auto">
+                            <h3 class="display-4">Register</h3>
+                            <p class="text-muted mb-4">Register by choosing a username and password.</p>
+                            <form action="{{ url_for('register') }}" method="post">
+                                <div class="form-group mb-3">
+                                    <input id="un" autocomplete="off" autofocus name="username" type="text" placeholder="Username" required class="form-control rounded-pill border-0 shadow-sm px-4"/>
+                                </div>
+                                <small>
+                                    <div id="untext" class="text-danger"></div>
+                                </small>
+                                <div class="form-group mb-3">
+                                    <input id="pw" name="password" placeholder="Password" type="password" required class="form-control rounded-pill border-0 shadow-sm px-4 text-primary"/>
+                                </div>
+                                <small>
+                                    <div id="pwtext" class="text-danger"></div>
+                                </small>
+                                <div class="form-group mb-3">
+                                    <input name="confirmation" id="cf" placeholder="Confirm password" type="password" required class="form-control rounded-pill border-0 shadow-sm px-4 text-primary"/>
+                                </div>
+                                <small>
+                                    <div id="cftext" class="text-danger"></div>
+                                </small>
+                                <button id="sub" type="submit" class="btn btn-primary btn-block text-uppercase mb-2 rounded-pill shadow-sm">Register</button>
+                                <a href="/login" class="btn btn-primary btn-block text-uppercase mb-2 rounded-pill shadow-sm">Log in</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <small>
-                <div id="untext" class="text-danger"></div>
-            </small>
-            
-            <div class="form-group">
-                <input class="form-control" id="pw" name="password" placeholder="Password" type="password" required>
-            </div>
-            <small>
-                <div id="pwtext" class="text-danger"></div>
-            </small>
-            
-            <div class="form-group">
-                <input class="form-control" name="confirmation" id="cf" placeholder="Confirm password" type="password" required>
-            </div>
-            <small>
-                <div id="cftext" class="text-danger"></div>
-            </small>
-            
-            <div class="form-group">
-                <button class="btn btn-primary" id="sub" type="submit">Register</button>
-            </div>
-        </fieldset>
-    </form>
+        </div>
+    </div>
 {% endblock %}
