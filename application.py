@@ -45,7 +45,8 @@ app.jinja_env.filters["usd"] = usd
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes = 30)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes = 30)
+
 Session(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finance.db'
