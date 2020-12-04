@@ -20,7 +20,7 @@ from helpers import apology, login_required, lookup, usd, historicalPlot
 
 
 
-API_KEY = 'pk_0bae86416ffe40dea6604c256084d52d'
+# API_KEY = 'pk_0bae86416ffe40dea6604c256084d52d'
 # Configure application
 app = Flask(__name__)
 
@@ -43,8 +43,9 @@ app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes = 30)
 Session(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finance.db'
