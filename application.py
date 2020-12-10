@@ -55,11 +55,10 @@ db = SQLAlchemy(app)
 @login_required
 def index():
     """Show portfolio of stocks"""
-    # get user cash total
+    # get game choice
     if request.form.get("gamechoice"):
         session['game'] = int(request.form.get("gamechoice"))
 
-    #NEED TO FIX: use ajax to stop every page from constant reload
     game = session['game']
     if game != 0:
         name = db.engine.execute("SELECT name FROM game WHERE gamenumber=?", game).fetchall()[0]['name']
@@ -208,7 +207,7 @@ def newgame():
             invites = request.form.getlist("invite")
             for invite in invites:
                 return render_template("newgame.html", uname=str(invite))
-        # ensure name of stock was submitted
+        # ensure parameters were submitted
         if not ((request.form.get("player2")) and (request.form.get("gamename")) and (request.form.get("days") or request.form.get("years") or request.form.get("weeks"))):
             flash('Please input a game name, duration, and second player')
             return render_template("newgame.html")
@@ -243,8 +242,6 @@ def newgame():
         db.engine.execute("INSERT INTO portfolio (user_id, stock, quantity, price, game) VALUES (:user_id,:stock,:startingcash, :dollar, :game)", user_id=session["user_id"], stock="Cash", startingcash=startingcash, dollar=1, game=game)
         db.engine.execute("INSERT INTO portfolio (user_id, stock, quantity, price, game) VALUES (:user_id,:stock,:startingcash, :dollar, :game)", user_id=player2, stock="Cash", startingcash=startingcash, dollar=1, game=game)
 
-
-        # stock name is valid
         return render_template("newgame.html")
 
     # else if user reached route via GET (as by clicking a link or via redirect)
