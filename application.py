@@ -43,9 +43,8 @@ app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes = 30)
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)
 
@@ -84,6 +83,8 @@ def index():
 def actionpage():
     """Get stock quote."""
     if request.method == "POST":
+        if request.form.get("redirToBuy"): #manages redirect from quote page, when user clicks 'buy' after seeing a stock quote
+            return render_template("actionpage.html", stk=str(request.form.get("redirToBuy")))
         # ensure name of stock was submitted
         if request.form.get("gamechoice"):
             session['game'] = int(request.form.get("gamechoice"))
@@ -96,11 +97,11 @@ def actionpage():
         if request.form.get("buysymbol") and request.form.get("buyshares"):
             buyList = buy(request.form.get("buysymbol"), request.form.get("buyshares"), game)
             if buyList:
-                flash('success')
+                flash('Success!')
         if request.form.get("sellsymbol") and request.form.get("sellshares"):
             sellList = sell(request.form.get("sellsymbol"), request.form.get("sellshares"), game)
             if sellList:
-                flash('success')
+                flash('Success!')
         if request.form.get("cashInput"):
             c = round(float(request.form.get("cashInput")), 2)
             if c <= 0:
@@ -121,39 +122,39 @@ def actionpage():
 @login_required
 def gamescreen():   
     sentinvites = db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) AND initialized=0 AND finished=0", user_id=session['user_id']).fetchall() 
-    sgame = []
+    sgame = [] #sent invites are games that are not initialized yet; the invite recipient is always player 2
     for games in sentinvites: 
         game = dict(games)
         opponent = str(db.engine.execute("SELECT * FROM users WHERE id=?", game['player2']).fetchall()[0]['username'])
         duration = str(datetime.timedelta(days=((int(game['years']) * 365) + int(game['days'])), weeks=int(game['weeks']))).split(",")[0]
         game.update({'opponent': opponent})
-        game.update({'duration': duration})
+        game.update({'duration': duration}) #obtain sent invites in dictionary format for convenience to show value in template that is not stored in SQL; the opponent of the current player is defferent depending on the player that is viewing 
         sgame.append(game)
 
     pastgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=1", user_id=session['user_id']).fetchall()
-    pgame = []
+    pgame = [] #past games are games that have finished 
     for games in pastgames:
         game = dict(games)
-        wu = db.engine.execute("SELECT * FROM users WHERE id=?", game['winner']).fetchall()
+        wu = db.engine.execute("SELECT * FROM users WHERE id=?", game['winner']).fetchall() #game's winner stored by user id
         if len(wu) > 0:
             wu = wu[0]['username']
-        if not wu: #winner is 0 when tie 
+        if not wu: #winner is set to 0 when tie 
             wu = "Tie"
         game.update({'wu':wu})
-        pgame.append(game)
+        game.update({'diff': abs(game['p1total'] - game['p2total'])})
+        pgame.append(game) #again, games stored in dict for similar reason as above 
 
     if request.method == "POST":
         if request.form.getlist("accept"):
             accepts = request.form.getlist("accept")
-            current = datetime.datetime.now()
+            current = datetime.datetime.now() #user can accept all invites at once 
             for accept in accepts: 
                 db.engine.execute("UPDATE game SET initialized=1, startdate=:start WHERE gamenumber=:game", start=current.strftime("%Y-%m-%d %H:%M:%S"), game=int(accept))
-            #cgame = list(filter(lambda i: i['id'] != 2, test_list)) 
         currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall()
         for game in currentgames:
-            timeRemaining(game['gamenumber'])
+            timeRemaining(game['gamenumber']) #this function updates SQL table for whether game is completed, who won, final totals, and if not done yet, then just the remaining time
         currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
-        cgame = []
+        cgame = [] #the code from above is repeated because once invites are accepted, the SQL table is updated with the new initialized games but the dictionaries that are sent to the template are not 
         for games in currentgames: 
             game = dict(games)
             if int(game["player1"]) == int(session['user_id']):
@@ -171,7 +172,7 @@ def gamescreen():
             game.update({'opponent': opponent})
             game.update({'duration': duration})
             igame.append(game)
-        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
+        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame, user=session['user_id'])
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
@@ -179,7 +180,7 @@ def gamescreen():
         for game in currentgames:
             timeRemaining(game['gamenumber'])
         currentgames = db.engine.execute("SELECT * FROM game WHERE (player1 IN (:user_id) OR player2 IN (:user_id)) AND initialized=1 AND finished=0", user_id=session['user_id']).fetchall() 
-        cgame = []
+        cgame = [] #again, same code as above
         for games in currentgames: 
             game = dict(games)
             if int(game["player1"]) == int(session['user_id']):
@@ -197,7 +198,7 @@ def gamescreen():
             game.update({'opponent': opponent})
             game.update({'duration': duration})
             igame.append(game)
-        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame)
+        return render_template("gamescreen.html", currentgames=cgame, gameinvites=igame, sentvites=sgame, pastgames=pgame, user=session['user_id'])
 
 @app.route("/newgame", methods=["GET", "POST"])
 @login_required
@@ -531,7 +532,7 @@ def quote():
         # stock name is valid
         else:
             plot = historicalPlot(request.form.get("symbol"))
-            return render_template("quoted.html", symbol=quote["symbol"], name=quote["name"], price=quote["price"], plot=plot)
+            return render_template("quote.html", symbol=quote["symbol"], name=quote["name"], price=quote["price"], plot=plot)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
@@ -541,7 +542,7 @@ def quote():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
-    flash('Please fill out all fields.')
+
     # if user reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 

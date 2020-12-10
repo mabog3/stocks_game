@@ -5,12 +5,14 @@
 {% endblock %}
 
 {% block main %}
+<hr class='invisible'>
     <div class = 'centered'>
         <h1>Games</h1>
     </div>
     <div>
-        <a class = "btn btn-primary" href="/newgame">New Game</a>
+        <a class = "btn btn-primary rounded-pill shadow-sm" href="/newgame">New Game</a>
     </div>
+    <hr>
     <div class="table-responsive">
         <h2>Current Games</h2>
         <table class="table">
@@ -94,16 +96,25 @@
                 <tr>
                     <th>Game</th>
                     <th>Winner</th>
-                    <th>Time Remaining</th>
+                    <th>Portfolio Difference</th>
                 </tr>
             </thead>
             <tbody>
                 {% for game in pastgames %}
-                <tr>
-                    <td> {{ game['name'] }} </td>
-                    <td> {{ game['wu'] }} </td>
-                    <td> {{ game['timeRemaining'] }}</td>
-                </tr>
+                    {% if game['winner'] == user %} <!-- change color based on who won-->
+                        <tr class='table-success'>
+                            <td> {{ game['name'] }} </td>
+                            <td> {{ game['wu'] }} </td>
+                            <td> {{ game['diff'] | usd}}</td>
+                        </tr>
+                    {% endif %}
+                    {% if game['winner'] != user and game['winner'] != 0 %} <!--a tie is not a loss -->
+                        <tr class='table-danger'>
+                            <td> {{ game['name'] }} </td>
+                            <td> {{ game['wu'] }} </td>
+                            <td> {{ game['diff'] | usd }}</td>
+                        </tr>
+                    {% endif %}
             {% endfor %}
             </tbody>
         </table>

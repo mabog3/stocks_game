@@ -6,10 +6,10 @@
 
 {% block main %}
     <div class = "centered">
-        <h1>Manage Assets</h1>
+        <h1 class="display-4">Manage Assets</h1>
     </div>
     <div>
-        <h3>Current game:
+        <h3 class="display-5">Current game:
         {% if not name %}
             None (personal portfolio)
         {% endif %}
@@ -22,40 +22,39 @@
     <div class="container">
         <form action="{{ url_for('actionpage') }}" method="post">
             <fieldset>
-                <div class="form-group centered">
-                    <select name="gamechoice" class = "dropdown-header centered">
-                        <option class="dropdown-item" btm selected disabled value="">Game</option></option>
-                        <option class="dropdown-item" value=0>No Game</option></option>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Choose Game
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton"> <!-- allows player to choose what game they want to view the portfolio of-->
+                        <button class="dropdown-item" value=0 name="gamechoice" type="submit"> No Game </button>
                         {% for game in games %}
-                            {% if game.initialized == 1 %}
-                                <option class="dropdown-item" value = {{ game.gamenumber }}> {{ game.name }} </option>
+                            {% if game.initialized == 1 and game.finished == 0 %}
+                                <button class="dropdown-item" value = "{{ game.gamenumber }}" name="gamechoice" type="submit"> {{ game.name }} </button>
                             {% endif %}
                         {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                <button class="btn btn-primary" type="submit">Choose Game</button>
-            </div>
+                    </div>
+                  </div>
             </fieldset>
         </form>
     </div>
-
+    <hr class='invisible'>
     <div class="d-flex flex-row centered">
         <div class = "card">
             <div class = "centered">
-                <h1>Buy Stock</h1>
+                <h1 class='display-4'>Buy Stock</h1>
             </div>
 
             <form action="{{ url_for('actionpage') }}" method="post">
                 <fieldset class="card-body">
                     <div class="form-group">
-                        <input autocomplete="off" autofocus class="form-control" name="buysymbol" placeholder="Stock Symbol" type="text" required/>
+                        <input autocomplete="off" autofocus class="form-control" name="buysymbol" placeholder="Stock Symbol" type="text" value="{{stk}}" required/>
                     </div>
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="buyshares" type = "number" step = "any" min = 0.01 placeholder="# of Shares" required/>
                     </div>
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit">Buy</button>
+                        <button class="btn btn-primary rounded-pill shadow-sm" type="submit">Buy</button>
                     </div>
                 </fieldset>
             </form>
@@ -63,7 +62,7 @@
 
         <div class="card">
             <div class = "centered">
-                <h1>Sell Stock</h1>
+                <h1 class='display-4'>Sell Stock</h1>
             </div>
             <form action="{{ url_for('actionpage') }}" method="post">
                 <fieldset class="card-body">
@@ -81,7 +80,7 @@
                         <input autocomplete="off" autofocus class="form-control" type = "number" step = "any" min=0.01 name="sellshares" placeholder="# of Shares" required/>
                     </div>
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit">Sell</button>
+                        <button class="btn btn-primary rounded-pill shadow-sm" type="submit">Sell</button>
                     </div>
                 </fieldset>
             </form>
@@ -90,7 +89,7 @@
         <div class="card">
             {% if not name %}
                 <div class = "centered">
-                <h1>Add Cash</h1>
+                <h1 class='display-4'>Add Cash</h1>
                 </div>
                 <form action="{{ url_for('actionpage') }}" method="post">
                     <fieldset class="card-body">
@@ -98,7 +97,7 @@
                             <input autocomplete="off" autofocus class="form-control" name="cashInput" type="number" step = "any" min=0 placeholder="Cash Amount" required/>
                         </div>
                         <div class="form-group">
-                            <button class="btn btn-primary" type="submit">Add</button>
+                            <button class="btn btn-primary rounded-pill shadow-sm" type="submit">Add</button>
                         </div>
                     </fieldset>
                 </form>

@@ -14,7 +14,7 @@ from flask import redirect, render_template, request, session
 from functools import wraps
 
 
-def apology(message, code=400):
+def apology(message, code=400): #citation: Finance distribution code 
     """Render message as an apology to user."""
     def escape(s):
         """
@@ -42,9 +42,6 @@ def login_required(f): # citation: from Finance distribution code (CS50 staff)
         return f(*args, **kwargs)
     return decorated_function
 
-#test = yf.Ticker("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
-#print(test.info)
-
 def test(symbol):
     try: 
         #return(si.get_live_price(symbol))
@@ -70,10 +67,10 @@ def historicalPlot(symbol):
                          high=dat['high'],
                          low=dat['low'],
                          close=dat['close'])]
-    graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
+    graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder) #sends 
     return graphJSON
 
-def histLookup(symbol): #with api
+def histLookup(symbol): 
     try:
         api_key = os.environ.get("API_KEY")
         url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/chart/5y/?token={api_key}"
@@ -93,7 +90,7 @@ def histLookup(symbol): #with api
 
 
 
-def lookup(symbol):
+def lookup(symbol): #citation: Finance distribution code 
     """Look up quote for symbol."""
     # Contact API
     try:
@@ -118,6 +115,6 @@ def lookup(symbol):
         return None
 
 
-def usd(value):
+def usd(value): #citation: Finance distribution code 
     """Format value as USD."""
     return f"${value:,.2f}"

@@ -5,17 +5,68 @@
 {% endblock %}
 
 {% block main %}
+    <hr class='invisible'/>
     <div class = 'centered'>
-        <h1>Get Quote</h1>
+        <h1 class='display-4'>Get Quote</h1>
     </div>
     <form action="{{ url_for('quote') }}" method="post">
         <fieldset>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock symbol" type="text" required/>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary" type="submit">Get Quote</button>
+            <div class="input-group mb-4">
+                <input class="form-control" autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock symbol" type="text" required/>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Get Quote
+                    </button>
+                </div>
             </div>
         </fieldset>
     </form>
+    {% if symbol %}
+    <hr/>
+    <div class="container">
+        <h2> {{name}} (Symbol: {{symbol}}) is currently trading at {{ price | usd}}.</h2>
+        <form action="{{ url_for('actionpage') }}" method="post">
+            <button class="btn btn-primary" type="submit" value="{{symbol}}" name="redirToBuy">Buy This Stock</button>
+        </form>
+    </div>
+
+    <div class="chart" id="candlestick"> <!-- plots a candlestick chart from the plotly module for the chosen stock, which is a type of financial chart that displays the open, close, highest, and lowest prices of a stock for each day -->
+        <script>
+            var graphs = {{ plot | safe }};
+            var layout = {
+                title: {
+                    text:'{{name}} ({{symbol}})',
+                    font: {
+                        family: 'Courier New, monospace',
+                        size: 24
+                    },
+                    xref: 'paper',
+                    //x: 0.05,
+                },
+                xaxis: {
+                    title: {
+                    text: 'Date',
+                    font: {
+                        family: 'Courier New, monospace',
+                        size: 18,
+                        color: '#7f7f7f'
+                        }
+                    },
+                },
+                yaxis: {
+                    title: {
+                    text: 'Share Price (USD)',
+                    font: {
+                        family: 'Courier New, monospace',
+                        size: 18,
+                        color: '#7f7f7f'
+                    }
+                    }
+                }
+            };
+            var config = {responsive: true}
+            Plotly.plot('candlestick', graphs, layout, config);
+            
+        </script>
+    </div>
+    {% endif %}
 {% endblock %}

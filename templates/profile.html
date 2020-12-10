@@ -6,12 +6,13 @@
 
 {% block main %}
     <div>
-        <h1>Hello, {{ user['username'] }}! </h1>
+        <hr class='invisible'>
+        <h1 class='display-4'>Hello, {{ user['username'] }}! </h1>
     </div> 
     <hr> 
-    <h2>Career wins: {{ user['wins'] }}</h2>
-
-    <h2> Change Profile </h2>
+    <h2 class='display-5'>Career wins: {{ user['wins'] }}</h2>
+    <hr>
+    <h2 class='display-5'> Change Profile </h2>
     <form action="/profile" method="post">
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="username" placeholder="New Username" type="text">
