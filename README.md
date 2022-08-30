@@ -1,6 +1,6 @@
 VIDEO LINK: https://www.youtube.com/watch?v=7xPGAm0DWfQ
 
-In order to run this application, either run Flask in your local environment after setting environment variable API_KEY to a valid IEX API key, or visit the following link: https://aqueous-wave-92474.herokuapp.com/login. Note that this Heroku link will likely respond very slowly as only free hosting options were chosen. 
+In order to run this application, either run Flask in your local environment after setting environment variable API_KEY to a valid IEX API key, or visit the following link: http://flask-env.eba-5p3qsj6p.us-west-2.elasticbeanstalk.com/. Note that this AWS link may respond slowly as only free hosting options were chosen. 
 
 Once the application is running, the user should either log in at the login page by entering their username and password and clicking "sign in," or they should navigate to the registration page by clicking the button that says "register". On the register page, the user should register by inputting a desired username and password, and confirming the password. The webpage will notify the user if the passwords do not match or do not fulfill minimum requirements, and after clicking "register" on the bottom, the user will be informed if their username is already taken. 
 
