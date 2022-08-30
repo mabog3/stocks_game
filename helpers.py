@@ -93,23 +93,29 @@ def histLookup(symbol):
 def lookup(symbol): #citation: Finance distribution code 
     """Look up quote for symbol."""
     # Contact API
+    # try:
+    #     api_key = os.environ.get("API_KEY")
+    #     url = f"https://cloud-sse.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
+    #     response = requests.get(url)
+    #     response.raise_for_status()
+    # except requests.RequestException:
+    #     return None
+    # try:
+    #     quote = response.json()
+    # except (KeyError, TypeError, ValueError):
+    #     quote = yf.Ticker(symbol).info
+    # # Parse response
+    quote = yf.Ticker(symbol).info
     try:
-        api_key = os.environ.get("API_KEY")
-        url = f"https://cloud-sse.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.RequestException:
-        return None
-    try:
-        quote = response.json()
-    except (KeyError, TypeError, ValueError):
-        return None
-    # Parse response
-    try:
+        # return {
+        #     "name": quote["companyName"],
+        #     "price": float(quote["latestPrice"]),
+        #     "symbol": quote["symbol"]
+        # }
         return {
-            "name": quote["companyName"],
-            "price": float(quote["latestPrice"]),
-            "symbol": quote["symbol"]
+            "name":quote["longName"], 
+            "price":quote["regularMarketPrice"], 
+            "symbol":quote["symbol"]
         }
     except (KeyError, TypeError, ValueError):
         return None

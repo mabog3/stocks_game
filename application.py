@@ -105,12 +105,12 @@ def actionpage():
             c = round(float(request.form.get("cashInput")), 2)
             if c <= 0:
                 flash('Cash quantity must be a positive real number')
-                return render_template("addcash.html")
+                return render_template("actionpage.html")
             # update cash amount in users database
             check = db.engine.execute("UPDATE portfolio SET quantity=quantity+:amt WHERE user_id=:user_id AND stock=:stock AND game=0", amt=c, user_id=session["user_id"], stock="Cash")
             if check:
                 flash('Success')
-                return render_template("addcash.html")
+                return render_template("actionpage.html")
         return render_template("actionpage.html", stocks = db.engine.execute("SELECT * FROM portfolio WHERE user_id = :user_id AND quantity > 0 AND game=:game", user_id=session["user_id"], game=session['game']),games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']),name=name)
 
     # else if user reached route via GET (as by clicking a link or via redirect)
