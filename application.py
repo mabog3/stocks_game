@@ -62,9 +62,11 @@ def index():
     game = session['game']
     if game != 0:
         name = db.engine.execute("SELECT name FROM game WHERE gamenumber=?", game).fetchall()[0]['name']
+        opponentName = db.engine.execute("SELECT username FROM users WHERE id=(select case when player1=? then player2 else player1 end as id from game where gamenumber=?)", session["user_id"], game).fetchall()[0]['username']
         startingcash=round(db.engine.execute("SELECT * FROM game WHERE gamenumber=?", game).fetchall()[0]['starting_cash'])
     else:
         name = ""
+        opponentName=""
         startingcash=10000
 
     portfolio = db.engine.execute("SELECT stock, quantity, price FROM portfolio WHERE user_id=? AND game=?", session["user_id"], game).fetchall()
@@ -75,7 +77,7 @@ def index():
     #cash = round(db.engine.execute("SELECT * FROM portfolio WHERE stock=:cash AND user_id=:user_id AND game=:game", cash="Cash",user_id=session["user_id"], game=game).fetchall()[0]['quantity'], 2)
     x = calculate_portfolio_value(portfolio)
 
-    return render_template("index.html", games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name, stocks=x[1], total=x[0], game=game) #need to implement game choice
+    return render_template("index.html", games=db.engine.execute("SELECT * FROM game WHERE player1 IN (:user_id) OR player2 IN (:user_id)", user_id=session['user_id']), name=name, stocks=x[1], total=x[0], game=game, opponentName=opponentName) #need to implement game choice
 
 @app.route("/actionpage", methods=["GET", "POST"])
 @login_required
